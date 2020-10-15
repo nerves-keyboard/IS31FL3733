@@ -13,6 +13,7 @@ defmodule IS31FL3733.MixProject do
       start_permanent: Mix.env() == :prod,
       preferred_cli_env: preferred_cli_env(),
       test_coverage: [tool: ExCoveralls],
+      dialyzer: dialyzer(),
       description: description(),
       package: package(),
       docs: docs(),
@@ -36,6 +37,13 @@ defmodule IS31FL3733.MixProject do
       "coveralls.post": :test,
       "coveralls.html": :test,
       "coveralls.json": :test
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_core_path: "_build/#{Mix.env()}",
+      flags: [:unmatched_returns, :error_handling, :underspecs]
     ]
   end
 

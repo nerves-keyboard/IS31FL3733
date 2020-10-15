@@ -5,15 +5,19 @@ defmodule IS31FL3733.I2CBehavior do
 
   alias Circuits.I2C
 
-  @callback open(binary() | charlist()) :: {:ok, I2C.bus()} | {:error, term()}
+  @type bus :: I2C.bus()
+  @type address :: I2C.address()
+  @type opt :: I2C.opt()
 
-  @callback close(I2C.bus()) :: :ok
+  @callback open(binary() | charlist()) :: {:ok, bus()} | {:error, term()}
 
-  @callback write(I2C.bus(), I2C.address(), iodata()) :: :ok | {:error, term()}
-  @callback write(I2C.bus(), I2C.address(), iodata(), [I2C.opt()]) :: :ok | {:error, term()}
+  @callback close(bus()) :: :ok
 
-  @callback write_read(I2C.bus(), I2C.address(), iodata(), pos_integer()) ::
+  @callback write(bus(), address(), iodata()) :: :ok | {:error, term()}
+  @callback write(bus(), address(), iodata(), [opt()]) :: :ok | {:error, term()}
+
+  @callback write_read(bus(), address(), iodata(), pos_integer()) ::
               {:ok, binary()} | {:error, term()}
-  @callback write_read(I2C.bus(), I2C.address(), iodata(), pos_integer(), [I2C.opt()]) ::
+  @callback write_read(bus(), address(), iodata(), pos_integer(), [opt()]) ::
               {:ok, binary()} | {:error, term()}
 end

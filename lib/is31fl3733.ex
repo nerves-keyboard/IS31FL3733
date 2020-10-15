@@ -31,6 +31,8 @@ defmodule IS31FL3733 do
       #IS31FL3733<"i2c-1@0x50">
   """
 
+  alias IS31FL3733.I2CBehavior, as: I2C
+
   defstruct ~w(
     address
     bus
