@@ -1,5 +1,10 @@
 # IS31FL3733
 
+[![CI Status](https://github.com/ElixirSeattle/IS31FL3733/workflows/CI/badge.svg)](https://github.com/ElixirSeattle/IS31FL3733/actions)
+[![codecov](https://codecov.io/gh/ElixirSeattle/IS31FL3733/branch/master/graph/badge.svg)](https://codecov.io/gh/ElixirSeattle/IS31FL3733)
+[![Hex.pm Version](https://img.shields.io/hexpm/v/is31fl3733.svg?style=flat)](https://hex.pm/packages/is31fl3733)
+[![License](https://img.shields.io/hexpm/l/is31fl3733.svg)](LICENSE.md)
+
 I2C driver for the IS31FL3733 12x16 dot matrix LED driver.
 
 This driver tries to follow the
