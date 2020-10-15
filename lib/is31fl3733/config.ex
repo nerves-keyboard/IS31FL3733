@@ -24,12 +24,12 @@ defmodule IS31FL3733.Config do
   """
   @spec default :: t()
   def default do
-    %__MODULE__{
+    struct!(__MODULE__, %{
       sync_mode: :single,
       trigger_open_short_detection: false,
       breathing: false,
       software_shutdown: true
-    }
+    })
   end
 
   @doc """
