@@ -36,14 +36,14 @@ defmodule IS31FL3733.MixProject do
       licenses: ["MIT"],
       links: %{
         "GitHub" => @source_url,
-        "Readme" => "#{@source_url}/blob/#{@version}/README.md"
+        "Readme" => "#{@source_url}/blob/v#{@version}/README.md"
       }
     ]
   end
 
   defp docs do
     [
-      source_ref: @version,
+      source_ref: "v#{@version}",
       source_url: @source_url,
       extras: [
         "README.md": [title: "README"],
