@@ -1,6 +1,6 @@
 defmodule IS31FL3733.Config do
   @moduledoc """
-  TODO:
+  Represents the config byte of the IS31FL3733's configuration register.
   """
 
   defstruct ~w(
@@ -10,6 +10,19 @@ defmodule IS31FL3733.Config do
     trigger_open_short_detection
   )a
 
+  @type sync_mode :: :single | :primary | :secondary
+
+  @type t :: %__MODULE__{
+          breathing: boolean(),
+          sync_mode: sync_mode(),
+          software_shutdown: boolean(),
+          trigger_open_short_detection: boolean()
+        }
+
+  @doc """
+  Returns the default configuration.
+  """
+  @spec default :: t()
   def default do
     %__MODULE__{
       sync_mode: :single,
@@ -19,6 +32,11 @@ defmodule IS31FL3733.Config do
     }
   end
 
+  @doc """
+  Encodes a configuration struct into a configuration byte for writing to the
+  configuration register.
+  """
+  @spec encode(config :: t()) :: binary()
   def encode(%__MODULE__{} = config) do
     <<
       sync_mode(config.sync_mode)::size(2),
