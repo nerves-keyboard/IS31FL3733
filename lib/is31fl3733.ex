@@ -8,35 +8,36 @@ defmodule IS31FL3733 do
   **NOTE:** Currently only PWM mode is supported. The auto-breath feature has
   not yet been implemented in this driver.
 
-  # Example Usage
+  ## Example Usage
 
-      # each bit is one LED, 24 * 8 == 16 * 12
-      led_state_data = String.duplicate(<<255>>, 24)
-      # each byte is one LED
-      led_pwm_data = String.duplicate(<<255>>, 16 * 12)
-
-      # turn on all the LEDs in PWM mode
-      ic =
-        "i2c-1"
-        |> IS31FL3733.open(0x50)
-        |> IS31FL3733.set_global_current_control(0x3C)
-        |> IS31FL3733.set_swy_pull_up_resistor(:"32k")
-        |> IS31FL3733.set_csx_pull_down_resistor(:"32k")
-        |> IS31FL3733.set_led_on_off(0x00, led_state_data)
-        |> IS31FL3733.set_led_pwm(0x00, led_pwm_data)
-        |> IS31FL3733.disable_software_shutdown()
+      iex> # each bit is one LED, 24 * 8 == 16 * 12
+      ...> led_state_data = String.duplicate(<<255>>, 24)
+      ...>
+      ...> # each byte is one LED
+      ...> led_pwm_data = String.duplicate(<<255>>, 16 * 12)
+      ...>
+      ...> # turn on all the LEDs in PWM mode
+      ...> ic =
+      ...>   "i2c-1"
+      ...>   |> IS31FL3733.open(0x50)
+      ...>   |> IS31FL3733.set_global_current_control(0x3C)
+      ...>   |> IS31FL3733.set_swy_pull_up_resistor(:"32k")
+      ...>   |> IS31FL3733.set_csx_pull_down_resistor(:"32k")
+      ...>   |> IS31FL3733.set_led_on_off(0x00, led_state_data)
+      ...>   |> IS31FL3733.set_led_pwm(0x00, led_pwm_data)
+      ...>   |> IS31FL3733.disable_software_shutdown()
+      ...>
+      ...> ic
+      #IS31FL3733<"i2c-1@0x50">
   """
-
-  alias Circuits.I2C
 
   defstruct ~w(
     address
     bus
+    bus_name
     page
     config
   )a
-
-  @type page :: 0x00..0x03
 
   @type sync_mode :: :single | :primary | :secondary
 
@@ -50,12 +51,15 @@ defmodule IS31FL3733 do
 
   @type resistor :: :none | :"500" | :"1k" | :"2k" | :"4k" | :"8k" | :"16k" | :"32k"
 
-  @type t :: %__MODULE__{
-          address: I2C.address(),
-          bus: I2C.bus(),
-          config: __MODULE__.Config.t(),
-          page: page()
-        }
+  @opaque t :: %__MODULE__{
+            address: I2C.address(),
+            bus: I2C.bus(),
+            bus_name: binary() | charlist(),
+            config: __MODULE__.Config.t(),
+            page: 0x00..0x03
+          }
+
+  @i2c Application.compile_env(:is31fl3733, :i2c, IS31FL3733.I2C)
 
   # Defined pages. Use command register to change active page.
   @page [
@@ -106,17 +110,19 @@ defmodule IS31FL3733 do
 
   The address can be determined by consulting page 9, table 1 in the data-sheet.
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.open("i2c-1", 0x50)
+      iex> IS31FL3733.open("i2c-1", 0x50)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec open(bus_name :: binary() | charlist(), address :: I2C.address()) :: t()
   def open(bus_name, address) do
-    case I2C.open(bus_name) do
+    case @i2c.open(bus_name) do
       {:ok, bus} ->
         state = %__MODULE__{
           address: address,
           bus: bus,
+          bus_name: bus_name,
           page: 0,
           config: IS31FL3733.Config.default()
         }
@@ -131,12 +137,14 @@ defmodule IS31FL3733 do
   @doc """
   Closes an I2C connection.
 
-  # Example
+  ## Examples
 
-      :ok = IS31FL3733.close(ic)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.close(ic)
+      :ok
   """
   @spec close(state :: t()) :: :ok
-  def close(state), do: I2C.close(state.bus)
+  def close(state), do: @i2c.close(state.bus)
 
   @doc """
   Sets the sync mode.
@@ -151,9 +159,11 @@ defmodule IS31FL3733 do
     * `:secondary` - This IC is a secondary and receives its clock signal from
       the primary.
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.set_sync_mode(ic, :primary)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.set_sync_mode(ic, :primary)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec set_sync_mode(state :: t(), sync_mode :: sync_mode()) :: t()
   def set_sync_mode(state, sync_mode) when sync_mode in ~w(single primary secondary)a do
@@ -175,9 +185,15 @@ defmodule IS31FL3733 do
     * `:breathing` - Use the auto-breath feature
     * `:pwm` - Manually set the PWM of each LED
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.set_led_mode(ic, :pwm)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.set_led_mode(ic, :pwm)
+      #IS31FL3733<"i2c-1@0x50">
+
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.set_led_mode(ic, :breathing)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec set_led_mode(state :: t(), led_mode :: led_mode()) :: t()
   def set_led_mode(state, :breathing) do
@@ -203,9 +219,11 @@ defmodule IS31FL3733 do
 
   Software shutdown is enable by default.
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.enable_software_shutdown(ic)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.enable_software_shutdown(ic)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec enable_software_shutdown(state :: t()) :: t()
   def enable_software_shutdown(state) do
@@ -222,9 +240,11 @@ defmodule IS31FL3733 do
 
   Software shutdown is enable by default.
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.disable_software_shutdown(ic)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.disable_software_shutdown(ic)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec disable_software_shutdown(state :: t()) :: t()
   def disable_software_shutdown(state) do
@@ -258,9 +278,11 @@ defmodule IS31FL3733 do
   See page 18, table 14 in the data-sheet for details on how this affects the
   current output of the CSx pins.
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.set_global_current_control(ic, 0x3C)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.set_global_current_control(ic, 0x3C)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec set_global_current_control(state :: t(), value :: current_control_value()) :: t()
   def set_global_current_control(state, value) when value in 0x00..0xFF do
@@ -285,12 +307,14 @@ defmodule IS31FL3733 do
 
   See page 14, table 6 in the data-sheet for details on how to address each LED.
 
-  # Example
+  ## Examples
 
-      # each bit is one LED, 24 * 8 == 12 * 16
-      led_state_data = String.duplicate(<<255>>, 24)
-      # turns on all LEDs in the matrix:
-      ic = IS31FL3733.set_led_on_off(ic, 0x00, led_state_data)
+      iex> # each bit is one LED, 24 * 8 == 12 * 16
+      ...> led_state_data = String.duplicate(<<255>>, 24)
+      ...> # turns on all LEDs in the matrix:
+      ...> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.set_led_on_off(ic, 0x00, led_state_data)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec set_led_on_off(state :: t(), start_register :: led_on_off_register(), data :: binary()) ::
           t()
@@ -320,12 +344,14 @@ defmodule IS31FL3733 do
   See page 15, figure 9 in the data-sheet for details on how to address each
   LED.
 
-  # Example
+  ## Examples
 
-      # each byte is one LED
-      led_pwm_data = String.duplicate(<<255>>, 16 * 12)
-      # sets the PWM value to max for all LEDs:
-      ic = IS31FL3733.set_led_pwm(ic, 0x00, led_pwm_data)
+      iex> # each byte is one LED
+      ...> led_pwm_data = String.duplicate(<<255>>, 16 * 12)
+      ...> # sets the PWM value to max for all LEDs:
+      ...> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.set_led_pwm(ic, 0x00, led_pwm_data)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec set_led_pwm(state :: t(), start_register :: led_pwm_register(), data :: binary()) :: t()
   def set_led_pwm(state, start_register, data) do
@@ -372,9 +398,11 @@ defmodule IS31FL3733 do
     * :"16k"
     * :"32k"
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.set_swy_pull_up_resistor(ic, :"32k")
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.set_swy_pull_up_resistor(ic, :"32k")
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec set_swy_pull_up_resistor(state :: t(), resistor :: resistor()) :: t()
   def set_swy_pull_up_resistor(state, resistor) do
@@ -403,9 +431,11 @@ defmodule IS31FL3733 do
     * :"16k"
     * :"32k"
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.set_csx_pull_down_resistor(ic, :"32k")
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.set_csx_pull_down_resistor(ic, :"32k")
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec set_csx_pull_down_resistor(state :: t(), resistor :: resistor()) :: t()
   def set_csx_pull_down_resistor(state, resistor) do
@@ -428,9 +458,11 @@ defmodule IS31FL3733 do
   @doc """
   Resets the internal state and configuration to defaults.
 
-  # Example
+  ## Examples
 
-      ic = IS31FL3733.reset(ic)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> IS31FL3733.reset(ic)
+      #IS31FL3733<"i2c-1@0x50">
   """
   @spec reset(state :: t()) :: t()
   def reset(state) do
@@ -455,9 +487,12 @@ defmodule IS31FL3733 do
 
   See page 14, table 6 in the data-sheet for details.
 
-  # Example
+  ## Examples
 
-      {ic, report} = IS31FL3733.report_open_leds(ic)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> {_ic, report} = IS31FL3733.report_open_leds(ic)
+      ...> report
+      <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>
   """
   @spec report_open_leds(state :: t()) :: {t(), binary()}
   def report_open_leds(state) do
@@ -480,9 +515,12 @@ defmodule IS31FL3733 do
 
   See page 14, table 6 in the data-sheet for details.
 
-  # Example
+  ## Examples
 
-      {ic, report} = IS31FL3733.report_short_leds(ic)
+      iex> ic = IS31FL3733.open("i2c-1", 0x50)
+      ...> {_ic, report} = IS31FL3733.report_short_leds(ic)
+      ...> report
+      <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>
   """
   @spec report_short_leds(state :: t()) :: {t(), binary()}
   def report_short_leds(state) do
@@ -507,11 +545,11 @@ defmodule IS31FL3733 do
     do: write(state, @register[:command_write_lock], @command_write_lock_disable_once)
 
   defp read(state, register, bytes),
-    do: I2C.write_read(state.bus, state.address, <<register>>, bytes)
+    do: @i2c.write_read(state.bus, state.address, <<register>>, bytes)
 
   defp write(state, register, value) when is_integer(value),
     do: write(state, register, <<value>>)
 
   defp write(state, register, data) when is_binary(data),
-    do: I2C.write(state.bus, state.address, <<register>> <> data)
+    do: @i2c.write(state.bus, state.address, <<register>> <> data)
 end
