@@ -24,7 +24,10 @@ in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:is31fl3733, "~> 0.1.0"}
+    {:is31fl3733, "~> 0.1"}
   ]
 end
-```
+
+## License
+
+This library is licensed under the [MIT license](./LICENSE.md)
