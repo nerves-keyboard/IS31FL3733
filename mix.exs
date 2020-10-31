@@ -1,8 +1,8 @@
 defmodule IS31FL3733.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
-  @source_url "https://github.com/ElixirSeattle/IS31FL3733"
+  @version "0.1.1"
+  @source_url "https://github.com/nerves-keyboard/IS31FL3733"
 
   def project do
     [
@@ -42,8 +42,7 @@ defmodule IS31FL3733.MixProject do
 
   defp dialyzer do
     [
-      plt_core_path: "_build/#{Mix.env()}",
-      flags: [:unmatched_returns, :error_handling, :underspecs]
+      plt_core_path: "_build/#{Mix.env()}"
     ]
   end
 
