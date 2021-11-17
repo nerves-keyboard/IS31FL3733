@@ -78,7 +78,7 @@ defmodule IS31FL3733.MixProject do
   defp deps do
     [
       {:circuits_i2c, "~> 0.3"},
-      {:credo, "~> 1.5.0-rc.4", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.6.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: :dev, runtime: false},
       {:ex_doc, "~> 0.22", only: :dev, runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
