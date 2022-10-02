@@ -27,6 +27,7 @@ def deps do
     {:is31fl3733, "~> 0.1"}
   ]
 end
+```
 
 ## License
 
